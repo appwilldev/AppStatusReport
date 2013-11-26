@@ -17,14 +17,32 @@
 
 @implementation AWAppStatusReport
 
-+ (void)report
++ (AWAppStatusReport *)sharedInstance
 {
+    static AWAppStatusReport *sharedInstance = nil;
+    if (sharedInstance == nil)
+    {
+        sharedInstance = [[AWAppStatusReport alloc] init];
+    }
+    return sharedInstance;
+}
+
+- (void)init:(NSString *)appID
+{
+    _appStoreID = appID;
+}
+
+- (void)report
+{
+    if (!_appStoreID) {
+        return;
+    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         static BOOL isReporting = NO;
         if (!isReporting) {
             isReporting = YES;
             
-            NSString* service_url = [NSString stringWithFormat:@"http://sa.appwill.com/1/openlog/?%@",[AWAppStatusReport customHTTPGETParams]];
+            NSString* service_url = [NSString stringWithFormat:@"http://sa.appwill.com/1/openlog/?%@",[self customHTTPGETParams]];
             NSURLRequest *req = [NSURLRequest requestWithURL:[NSURL URLWithString:service_url]];
             NSHTTPURLResponse *response = nil;
             NSError *error = nil;
@@ -35,7 +53,7 @@
                 double delayInSeconds = 10.0;
                 dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
                 dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-                    [AWAppStatusReport report];
+                    [self report];
                 });
                 
             }
@@ -45,33 +63,30 @@
     });
 }
 
-+ (NSString*)customHTTPGETParams {
+
+- (NSString*)customHTTPGETParams {
     static NSString* httpGETParams = nil;
 	if (httpGETParams==nil) {
-        NSString *appID = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"AppStoreID"];
-        if (![appID length]) {
-            [NSException raise:NSInvalidArgumentException format:@"Miss AppStoreID in info.plist. Please add a key 'AppStoreID' to info.plist which value is your app's id in appStore"];
-        }
 		UIDevice *device = [UIDevice currentDevice];
 		NSBundle *bundle = [NSBundle mainBundle];
-		NSLocale *locale = [AWAppStatusReport currentLocale];
-		NSString *model = [[AWAppStatusReport specificMachineModel] lowercaseString];
+		NSLocale *locale = [self currentLocale];
+		NSString *model = [[self specificMachineModel] lowercaseString];
         
 		NSString* deviceid = @"NA";
-        NSString *macaddr = [[AWAppStatusReport macaddress] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSString *macaddr = [[self macaddress] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         NSInteger timezone = [[NSTimeZone systemTimeZone] secondsFromGMT];
         NSString *phonetype = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) ? @"ipad" : @"iphone";
 		httpGETParams = [NSString stringWithFormat:@"appid=%@&app=%@&v=%@&lang=%@&jb=%d&as=%d&mobclix=0&deviceid=%@&macaddr=%@&openudid=%@&ida=%@&tz=%d&phonetype=%@&model=%@&osn=%@&osv=%@",
-                         appID,
-						 [[AWAppStatusReport appName] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
+                         _appStoreID,
+						 [[self appName] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
 						 [[bundle objectForInfoDictionaryKey:@"CFBundleVersion"] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
 						 [[locale localeIdentifier] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
-						 [AWAppStatusReport isJailBroken],
+						 [self isJailBroken],
 						 0,
 						 deviceid,
                          macaddr,
                          [OpenUDID value],
-                         [AWAppStatusReport idA],
+                         [self idA],
                          timezone/3600,
                          phonetype,
 						 //[[device model] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
@@ -82,7 +97,7 @@
 	return httpGETParams;
 }
 
-+ (NSLocale*)currentLocale
+- (NSLocale*)currentLocale
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	NSArray* languages = [defaults objectForKey:@"AppleLanguages"];
@@ -94,7 +109,7 @@
 	}
 }
 
-+ (NSString*)specificMachineModel
+- (NSString*)specificMachineModel
 {
     struct utsname systemInfo;
     uname(&systemInfo);
@@ -103,7 +118,7 @@
                               encoding:NSUTF8StringEncoding];
 }
 
-+ (NSString *) macaddress{
+- (NSString *) macaddress{
     
     int                 mib[6];
     size_t              len;
@@ -149,7 +164,7 @@
     return outstring;
 }
 
-+ (NSString *)appName
+- (NSString *)appName
 {
     static NSString *APPNAME = nil;
     if (!APPNAME) {
@@ -159,7 +174,7 @@
     return APPNAME;
 }
 
-+ (BOOL)isJailBroken {
+- (BOOL)isJailBroken {
 	NSString *filePath = @"/Applications/Cydia.app";
 	if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
 		return YES;
@@ -173,7 +188,7 @@
 	return NO;
 }
 
-+ (NSString *)idA
+- (NSString *)idA
 {
     UIDevice *device = [UIDevice currentDevice];
     if ([self isVersionSupport:@"6.0"] && [device respondsToSelector:@selector(identifierForVendor)]) {
@@ -182,7 +197,7 @@
     return @"NA";
 }
 
-+ (BOOL)isVersionSupport:(NSString *)reqSysVer {
+- (BOOL)isVersionSupport:(NSString *)reqSysVer {
 	NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
 	BOOL osVersionSupported = ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending);
 	return osVersionSupported;

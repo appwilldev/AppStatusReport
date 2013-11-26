@@ -9,7 +9,14 @@
 #import <Foundation/Foundation.h>
 
 @interface AWAppStatusReport : NSObject
+{
+@private
+    NSString* _appStoreID;
+}
 
-+ (void)report;
++ (AWAppStatusReport *)sharedInstance;
+
+- (void)init:(NSString*)appID;
+- (void)report;
 
 @end
