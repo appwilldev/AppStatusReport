@@ -24,22 +24,20 @@
         if (!isReporting) {
             isReporting = YES;
             
-            NSString *keyLastTimeReportKey = @"LastTimeStatusReport";
-            NSInteger lastDate = [[NSUserDefaults standardUserDefaults] integerForKey:keyLastTimeReportKey];
-            NSInteger nowDate = (int)[[NSDate date] timeIntervalSince1970];
+            NSString* service_url = [NSString stringWithFormat:@"http://sa.appwill.com/1/openlog/?%@",[AWAppStatusReport customHTTPGETParams]];
+            NSURLRequest *req = [NSURLRequest requestWithURL:[NSURL URLWithString:service_url]];
+            NSHTTPURLResponse *response = nil;
+            NSError *error = nil;
+            [NSURLConnection sendSynchronousRequest:req returningResponse:&response error:&error];
             
-            NSTimeInterval oneDay = 24*60*60;
-            if (nowDate - lastDate > oneDay) {
-                NSString* service_url = [NSString stringWithFormat:@"http://sa.appwill.com/1/openlog/?%@",[AWAppStatusReport customHTTPGETParams]];
-                NSURLRequest *req = [NSURLRequest requestWithURL:[NSURL URLWithString:service_url]];
-                NSHTTPURLResponse *response = nil;
-                NSError *error = nil;
-                [NSURLConnection sendSynchronousRequest:req returningResponse:&response error:&error];
+            if (!([response statusCode] == 200 && !error)) {
                 
-                if ([response statusCode] == 200 && !error) {
-                    [[NSUserDefaults standardUserDefaults] setInteger:(NSInteger)[[NSDate date] timeIntervalSince1970] forKey:keyLastTimeReportKey];
-                    [[NSUserDefaults standardUserDefaults] synchronize];
-                }
+                double delayInSeconds = 10.0;
+                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+                dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+                    [AWAppStatusReport report];
+                });
+                
             }
             
             isReporting = NO;
