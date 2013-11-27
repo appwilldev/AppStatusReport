@@ -14,9 +14,9 @@
     NSString* _appStoreID;
 }
 
-+ (AWAppStatusReport *)sharedInstance;
++ (AWAppStatusReport *)sharedStatusReport;
 
-- (void)init:(NSString*)appID;
+- (void)setAppID:(NSString*)appID;
 - (void)report;
 
 @end

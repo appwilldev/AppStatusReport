@@ -17,17 +17,27 @@
 
 @implementation AWAppStatusReport
 
-+ (AWAppStatusReport *)sharedInstance
-{
-    static AWAppStatusReport *sharedInstance = nil;
-    if (sharedInstance == nil)
-    {
-        sharedInstance = [[AWAppStatusReport alloc] init];
-    }
-    return sharedInstance;
++ (AWAppStatusReport *)sharedStatusReport {
+    static AWAppStatusReport *_sharedStatusReport = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _sharedStatusReport = [[AWAppStatusReport alloc] init];
+    });
+    
+    return _sharedStatusReport;
 }
 
-- (void)init:(NSString *)appID
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        _appStoreID = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"AppStoreID"];
+    }
+    
+    return self;
+}
+
+- (void)setAppID:(NSString *)appID
 {
     _appStoreID = appID;
 }
@@ -37,6 +47,7 @@
     if (!_appStoreID) {
         return;
     }
+    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         static BOOL isReporting = NO;
         if (!isReporting) {

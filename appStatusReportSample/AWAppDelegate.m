@@ -17,7 +17,7 @@
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
     [self.window makeKeyAndVisible];
-    [AWAppStatusReport report];
+    [[AWAppStatusReport sharedStatusReport] report];
     return YES;
 }
 
@@ -35,7 +35,7 @@
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
-    [AWAppStatusReport report];
+    [[AWAppStatusReport sharedStatusReport] report];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
