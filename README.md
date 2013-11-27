@@ -6,6 +6,7 @@ AppStatusReport
 ## Requirement
 1. iOS 5.0
 2. openUDID
+3. ARC
 
 ## 集成步骤
 1. 添加AppStatusReport目录到工程里（已包含openUDID）；

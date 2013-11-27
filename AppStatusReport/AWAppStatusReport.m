@@ -6,6 +6,14 @@
 //  Copyright (c) 2013 AppTao. All rights reserved.
 //
 
+#if __has_feature(objc_arc)
+
+#else
+
+#error Need ARC. please set complie flag '-fobjc-arc' to this file in build phases
+
+#endif
+
 #import "AWAppStatusReport.h"
 #import "OpenUDID.h"
 #import <sys/utsname.h>
