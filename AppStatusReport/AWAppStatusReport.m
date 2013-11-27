@@ -67,14 +67,17 @@
             NSError *error = nil;
             [NSURLConnection sendSynchronousRequest:req returningResponse:&response error:&error];
             
-            if (!([response statusCode] == 200 && !error)) {
-                
+            
+            static NSUInteger retryReportCount = 5;
+            if (!([response statusCode] == 200 && !error) && retryReportCount--) {
                 double delayInSeconds = 10.0;
                 dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
                 dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
                     [self report];
                 });
-                
+            }
+            else {
+                retryReportCount = 5;
             }
             
             isReporting = NO;
