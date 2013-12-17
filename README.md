@@ -6,7 +6,7 @@ AppStatusReport
 ## Requirement
 1. iOS 5.0
 2. openUDID
-3. ARC
+3. ARC (如果不是 ARC 环境，请在工程的Build Phases设置给「AWAppStatusReport.m」加上「**-fobjc-arc**」编译开关)
 
 ## 集成步骤
 1. 添加AppStatusReport目录到工程里（已包含openUDID）；
