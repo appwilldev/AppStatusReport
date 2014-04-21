@@ -40,6 +40,7 @@
     self = [super init];
     if (self) {
         _appStoreID = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"AppStoreID"];
+        _appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
     }
     
     return self;
@@ -50,9 +51,14 @@
     _appStoreID = appID;
 }
 
+- (void)setAppName:(NSString *)appName
+{
+    _appName = appName;
+}
+
 - (void)report
 {
-    if (!_appStoreID) {
+    if (_appStoreID == nil || _appName == nil) {
         return;
     }
     
@@ -95,12 +101,12 @@
 		NSString *model = [[self specificMachineModel] lowercaseString];
         
 		NSString* deviceid = @"NA";
-        NSString *macaddr = [[self macaddress] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSString *macaddr = @"NA";
         NSInteger timezone = [[NSTimeZone systemTimeZone] secondsFromGMT];
         NSString *phonetype = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) ? @"ipad" : @"iphone";
 		httpGETParams = [NSString stringWithFormat:@"appid=%@&app=%@&v=%@&lang=%@&jb=%d&as=%d&mobclix=0&deviceid=%@&macaddr=%@&openudid=%@&ida=%@&tz=%d&phonetype=%@&model=%@&osn=%@&osv=%@",
                          _appStoreID,
-						 [[self appName] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
+						 [_appName stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
 						 [[bundle objectForInfoDictionaryKey:@"CFBundleVersion"] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
 						 [[locale localeIdentifier] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
 						 [self isJailBroken],
@@ -138,62 +144,6 @@
 	
     return [NSString stringWithCString:systemInfo.machine
                               encoding:NSUTF8StringEncoding];
-}
-
-- (NSString *) macaddress{
-    
-    int                 mib[6];
-    size_t              len;
-    char                *buf;
-    unsigned char       *ptr;
-    struct if_msghdr    *ifm;
-    struct sockaddr_dl  *sdl;
-    
-    mib[0] = CTL_NET;
-    mib[1] = AF_ROUTE;
-    mib[2] = 0;
-    mib[3] = AF_LINK;
-    mib[4] = NET_RT_IFLIST;
-    
-    if ((mib[5] = if_nametoindex("en0")) == 0) {
-        printf("Error: if_nametoindex error\n");
-        return NULL;
-    }
-    
-    if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        printf("Error: sysctl, take 1\n");
-        return NULL;
-    }
-    
-    if ((buf = malloc(len)) == NULL) {
-        printf("Could not allocate memory. error!\n");
-        return NULL;
-    }
-    
-    if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
-        free(buf);
-        printf("Error: sysctl, take 2");
-        return NULL;
-    }
-    
-    ifm = (struct if_msghdr *)buf;
-    sdl = (struct sockaddr_dl *)(ifm + 1);
-    ptr = (unsigned char *)LLADDR(sdl);
-    NSString *outstring = [NSString stringWithFormat:@"%02X%02X%02X%02X%02X%02X",
-                           *ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5)];
-    free(buf);
-    
-    return outstring;
-}
-
-- (NSString *)appName
-{
-    static NSString *APPNAME = nil;
-    if (!APPNAME) {
-        APPNAME = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
-    }
-
-    return APPNAME;
 }
 
 - (BOOL)isJailBroken {

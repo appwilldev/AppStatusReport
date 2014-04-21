@@ -11,12 +11,14 @@
 @interface AWAppStatusReport : NSObject
 {
 @private
-    NSString* _appStoreID;
+    NSString *_appStoreID;
+    NSString *_appName;
 }
 
 + (AWAppStatusReport *)sharedStatusReport;
 
 - (void)setAppID:(NSString*)appID;
+- (void)setAppName:(NSString*)appName;
 - (void)report;
 
 @end
